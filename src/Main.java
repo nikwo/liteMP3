@@ -19,7 +19,6 @@ public class Main extends Application{
         stage.setTitle("LiteMP3");
         stage.setWidth(600);
         stage.setHeight(800);
-        screen.bind_label_resize(scene);
         screen.bind_grid_resize(scene);
 
         stage.setScene(scene);
