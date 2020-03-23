@@ -5,23 +5,16 @@ import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
-import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.geometry.VPos;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
-
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.Vector;
 
 import javafx.util.Duration;
@@ -37,7 +30,7 @@ public class MainScreen extends Group {
         program_name = new Label("LiteMP3");
         track_name = new Label();
     }
-    public Group get_screen() throws FileNotFoundException {
+    public Group get_screen(){
         grid.setBackground(new Background(new BackgroundFill(Color.rgb(77, 69, 99), CornerRadii.EMPTY, Insets.EMPTY)));
         grid.setVgap(10);
         grid.setHgap(10);
@@ -141,17 +134,14 @@ public class MainScreen extends Group {
         btn_vec.add(random_button);
 
         for(Button btn : btn_vec){
-            btn.setOnAction(new EventHandler<ActionEvent>() {
-                @Override
-                public void handle(ActionEvent actionEvent) {
-                    Timeline timeline = new Timeline();
-                    timeline.getKeyFrames().addAll(
-                            new KeyFrame(Duration.ZERO,
-                                    new KeyValue(btn.opacityProperty(), 0.1)),
-                            new KeyFrame(new Duration(500),
-                                    new KeyValue(btn.opacityProperty(), 1)));
-                    timeline.play();
-                }
+            btn.setOnAction(actionEvent -> {
+                Timeline timeline = new Timeline();
+                timeline.getKeyFrames().addAll(
+                        new KeyFrame(Duration.ZERO,
+                                new KeyValue(btn.opacityProperty(), 0.1)),
+                        new KeyFrame(new Duration(500),
+                                new KeyValue(btn.opacityProperty(), 1)));
+                timeline.play();
             });
         }
 
