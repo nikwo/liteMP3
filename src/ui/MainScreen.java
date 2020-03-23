@@ -3,14 +3,18 @@ package ui;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -22,11 +26,13 @@ import javafx.util.Duration;
 public class MainScreen extends Group {
     private Group screen;
     private GridPane grid;
+    private FlowPane flow;
     private Label program_name;
     private Label track_name;
     public MainScreen(){
         screen = new Group();
         grid = new GridPane();
+        flow = new FlowPane();
         program_name = new Label("LiteMP3");
         track_name = new Label();
     }
@@ -154,7 +160,27 @@ public class MainScreen extends Group {
         grid.add(cycle_button, 0, 2);
         grid.add(random_button, 4, 2);
 
+        flow.setLayoutY(0);
+        flow.setLayoutX(440);
+        flow.setBackground(new Background(new BackgroundFill(Color.rgb(36, 30, 57), CornerRadii.EMPTY, Insets.EMPTY)));
+        flow.setMinWidth(600);
+        flow.setMinHeight(800);
+        flow.setOrientation(Orientation.VERTICAL);
+        flow.setVgap(10);
+        ObservableList<String> tracks = FXCollections.observableArrayList("track1", "track2", "track3", "track4", "track5", "track6", "track7");
+        ListView<String> tracksListView = new ListView<String>(tracks);
+        tracksListView.setStyle("-fx-control-inner-background: \"#241E39\";" + "-fx-font-size: 20px;"
+                + "-fx-font-family: Consolas;" + "-fx-background-insets: 0 ;");
+        tracksListView.setMinWidth(flow.getMinWidth());
+        tracksListView.setMinHeight(670);
+
+        flow.getChildren().add(tracksListView);
+
         screen.getChildren().add(grid);
+        screen.getChildren().add(flow);
+
+
+
         return screen;
     }
 

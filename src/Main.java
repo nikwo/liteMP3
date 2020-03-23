@@ -1,4 +1,5 @@
 import cfg.Config;
+import db.DatabaseController;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import javafx.application.Application;
@@ -26,14 +27,8 @@ public class Main extends Application{
         stage.setHeight(800);
         screen.bind_grid_resize(scene);
 
-        MediaDataParser p = new MediaDataParser("D:/Music/Error37");
-        p.parse();
-        List<File> f = p.getFile_list();
-        for(File file: f){
-            System.out.println(file.getName());
-        }
-
-        MetaData m = new MetaData(f.get(0));
+        DatabaseController db = new DatabaseController();
+        db.init(config.is_statred());
 
         stage.setScene(scene);
         stage.show();

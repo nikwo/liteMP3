@@ -58,4 +58,7 @@ public class Config {
             }
         }
     }
+    public Boolean is_statred(){
+        return first_run;
+    }
 }
