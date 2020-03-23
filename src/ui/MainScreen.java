@@ -1,5 +1,10 @@
 package ui;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -17,6 +22,9 @@ import javafx.scene.text.TextAlignment;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.Vector;
+
+import javafx.util.Duration;
 
 public class MainScreen extends Group {
     private Group screen;
@@ -32,21 +40,29 @@ public class MainScreen extends Group {
     public Group get_screen() throws FileNotFoundException {
         grid.setBackground(new Background(new BackgroundFill(Color.rgb(77, 69, 99), CornerRadii.EMPTY, Insets.EMPTY)));
         grid.setVgap(10);
+        grid.setHgap(10);
+
         ColumnConstraints col0 = new ColumnConstraints();
         col0.setHgrow(Priority.ALWAYS);
-        col0.setHalignment(HPos.LEFT);
+        col0.setPercentWidth(25);
+
         ColumnConstraints col1 = new ColumnConstraints();
         col1.setHgrow(Priority.ALWAYS);
-        col1.setHalignment(HPos.LEFT);
+        col1.setPercentWidth(25);
+
         ColumnConstraints col2 = new ColumnConstraints();
         col2.setHgrow(Priority.ALWAYS);
-        col2.setHalignment(HPos.CENTER);
+        col2.setPercentWidth(25);
+
         ColumnConstraints col3 = new ColumnConstraints();
         col3.setHgrow(Priority.ALWAYS);
-        col3.setHalignment(HPos.RIGHT);
+        col3.setPercentWidth(25);
+
         ColumnConstraints col4 = new ColumnConstraints();
         col4.setHgrow(Priority.ALWAYS);
-        col4.setHalignment(HPos.RIGHT);
+        col4.setPercentWidth(25);
+        grid.setMaxWidth(400);
+
         grid.getColumnConstraints().addAll(col0, col1, col2, col3, col4);
         RowConstraints row0 = new RowConstraints();
         row0.setVgrow(Priority.NEVER);
@@ -72,6 +88,10 @@ public class MainScreen extends Group {
         track_name.setTextAlignment(TextAlignment.JUSTIFY);
         track_name.setMinHeight(40);
         track_name.setMaxWidth(Double.MAX_VALUE);
+
+        Region track_image = new Region();
+        track_image.setStyle("-fx-background-image: url('/ui/icons/no_picture.png'); "+
+                "-fx-background-size: cover; ");
 
         Button menu_button = new Button("");
         menu_button.setBackground(new Background(new BackgroundFill(Color.rgb(108, 79, 130), CornerRadii.EMPTY, Insets.EMPTY)));
@@ -106,18 +126,38 @@ public class MainScreen extends Group {
         Button random_button = new Button("");
         random_button.setBackground(new Background(new BackgroundFill(Color.rgb(108, 79, 130), CornerRadii.EMPTY, Insets.EMPTY)));
         random_button.setStyle("-fx-background-image: url('/ui/icons/random_icon.png'); "+
-                "-fx-background-size: cover; " + "-fx-background-color:transparent;");
+                "-fx-background-size: cover; " + "-fx-background-color:transparent;" + "-fx-background-position: center");
         random_button.setMinSize(80,80);
 
-        Image image = new Image("file:./src/ui/icons/no_pic_icon.png");
-        ImageView track_pic = new ImageView(image);
-        track_pic.setFitHeight(580);
-        track_pic.setFitWidth(600/5*3);
-        track_pic.setPreserveRatio(true);
+        track_image.setMaxWidth(440);
+        track_image.setMaxHeight(580);
+
+        Vector<Button> btn_vec = new Vector<>();
+        btn_vec.add(menu_button);
+        btn_vec.add(next_button);
+        btn_vec.add(prev_button);
+        btn_vec.add(play_button);
+        btn_vec.add(cycle_button);
+        btn_vec.add(random_button);
+
+        for(Button btn : btn_vec){
+            btn.setOnAction(new EventHandler<ActionEvent>() {
+                @Override
+                public void handle(ActionEvent actionEvent) {
+                    Timeline timeline = new Timeline();
+                    timeline.getKeyFrames().addAll(
+                            new KeyFrame(Duration.ZERO,
+                                    new KeyValue(btn.opacityProperty(), 0.1)),
+                            new KeyFrame(new Duration(500),
+                                    new KeyValue(btn.opacityProperty(), 1)));
+                    timeline.play();
+                }
+            });
+        }
 
         grid.add(menu_button, 0, 0);
         grid.add(track_name, 1, 0, 3, 1);
-        //grid.add(track_pic, 1, 1, 3, 1);
+        grid.add(track_image, 0, 1, 5, 1);
         grid.add(next_button, 3, 2);
         grid.add(play_button, 2, 2);
         grid.add(prev_button, 1, 2);

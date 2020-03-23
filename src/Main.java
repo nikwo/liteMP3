@@ -17,7 +17,7 @@ public class Main extends Application{
         MainScreen screen = new MainScreen();
         Scene scene = new Scene(screen.get_screen());
         stage.setTitle("LiteMP3");
-        stage.setWidth(600);
+        stage.setWidth(1000);
         stage.setHeight(800);
         screen.bind_grid_resize(scene);
 
