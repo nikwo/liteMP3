@@ -8,6 +8,7 @@ import parser.MetaData;
 import ui.MainScreen;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -28,7 +29,11 @@ public class Main extends Application{
         screen.bind_grid_resize(scene);
 
         DatabaseController db = new DatabaseController();
-        db.init(config.is_statred());
+        Boolean success = db.init(config.is_started());
+        if(success){
+            config.set_start_flag(false);
+            config.write_cfg_state();
+        }
 
         stage.setScene(scene);
         stage.show();

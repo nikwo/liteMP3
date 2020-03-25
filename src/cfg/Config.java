@@ -52,13 +52,27 @@ public class Config {
                         timeline_seconds = Integer.parseInt(line.substring(8));
                     }
                 }
+                reader.close();
             }
             catch(Exception e){
                 e.printStackTrace();
             }
         }
     }
-    public Boolean is_statred(){
+    public Boolean is_started(){
         return first_run;
+    }
+    public void set_start_flag(Boolean flag){
+        first_run = flag;
+    }
+    public void write_cfg_state() throws IOException {
+        BufferedWriter bw = new BufferedWriter(new FileWriter(new File("./player.cfg")));
+        bw.write("# config file for player\n");
+        bw.write("FIRST_RUN:"+String.valueOf(first_run).toUpperCase()+"\n");
+        bw.write("THEME:"+theme.toUpperCase()+"\n");
+        bw.write("TRACK_ID:"+track_id+"\n");
+        bw.write("MINUTES:"+timeline_minutes+"\n");
+        bw.write("SECONDS:"+timeline_seconds+"\n");
+        bw.close();
     }
 }

@@ -12,7 +12,7 @@ import org.xml.sax.helpers.DefaultHandler;
 import java.io.*;
 
 public class MetaData {
-    private String _track_name, _group_name, _genre, _year, _track_path, _image_path;
+    private String _track_name, _group_name, _genre, _year, _track_path, _image_path, _album;
     public MetaData(String name, String group, String genre, String year){
         _track_name = name;
         _group_name = group;
@@ -29,22 +29,45 @@ public class MetaData {
             parser.parse(input, handler, metadata, parseCtx);
             input.close();
 
+            _image_path = "";
             _track_name = metadata.get("title");
             _group_name = metadata.get("xmpDM:artist");
             _genre = metadata.get("xmpDM:genre");
             _year = metadata.get("xmpDM:releaseDate");
             _track_path = file.getAbsolutePath();
+            _album = metadata.get("xmpDM:album");
+
+            if (_genre == null)
+                _genre = "unknown";
+            if (_album == null)
+                _album = "unknown";
+            if (_group_name == null)
+                _group_name = "unknown";
+            if (_year == null)
+                _year = "none";
+            if (_track_name == null)
+                _track_name = "unknown";
+
+            _track_name = shield_literals(_track_name);
+            _group_name = shield_literals(_group_name);
+            _genre = shield_literals(_genre);
+            _album = shield_literals(_album);
+            _track_path = shield_literals(_track_path);
 
             // Now getting image with ffmpeg
             File img = new File(file.getParent()+"\\cover.jpg");
             if(!img.exists()) {
                 ProcessBuilder pb = new ProcessBuilder("ffmpeg", "-i", "\"" + file.getAbsolutePath() + "\"", "\"" + file.getParent() + "\\cover.jpg\"");
-                pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
-                pb.redirectError(ProcessBuilder.Redirect.INHERIT);
                 Process process = pb.start();
+                OutputStream outputStream = process.getOutputStream();
+                if(outputStream.toString().contains("Output file #0 does not contain any stream")){
+                    _image_path = "null";
+                }
             }
-
-            _image_path = file.getParent()+"\\cover.jpg";
+            else {
+                _image_path = file.getParent() + "\\cover.jpg";
+                _image_path = shield_literals(_image_path);
+            }
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -83,7 +106,16 @@ public class MetaData {
     public String get_track_path() {
         return _track_path;
     }
+
     public String get_image_path() {
         return _image_path;
+    }
+
+    public String get_album_name()  {
+        return _album;
+    }
+    private String shield_literals(String input){
+        String out = input.replace("\'", "\'\'");
+        return out;
     }
 }
