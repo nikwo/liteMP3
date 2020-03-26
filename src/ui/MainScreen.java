@@ -1,27 +1,35 @@
 package ui;
 
+import cfg.Config;
+import db.DatabaseController;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
+import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
+
+import java.io.File;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.Vector;
 
+import javafx.stage.DirectoryChooser;
+import javafx.stage.Stage;
 import javafx.util.Duration;
+import parser.MediaDataParser;
+import parser.MetaData;
 
 public class MainScreen extends Group {
     private Group screen;
@@ -29,12 +37,20 @@ public class MainScreen extends Group {
     private FlowPane flow;
     private Label program_name;
     private Label track_name;
-    public MainScreen(){
+    private Stage stage;
+    private List<File> file_list;
+    private Config cfg;
+    private ListView<String> tracksListView;
+    public MainScreen(Stage s, Config c){
         screen = new Group();
         grid = new GridPane();
         flow = new FlowPane();
         program_name = new Label("LiteMP3");
         track_name = new Label();
+        stage = s;
+        file_list = new ArrayList<>();
+        cfg = c;
+        tracksListView  = new ListView<>();
     }
     public Group get_screen(){
         grid.setBackground(new Background(new BackgroundFill(Color.rgb(77, 69, 99), CornerRadii.EMPTY, Insets.EMPTY)));
@@ -164,22 +180,84 @@ public class MainScreen extends Group {
         flow.setLayoutX(440);
         flow.setBackground(new Background(new BackgroundFill(Color.rgb(36, 30, 57), CornerRadii.EMPTY, Insets.EMPTY)));
         flow.setMinWidth(600);
-        flow.setMinHeight(800);
+        flow.setMinHeight(670);
         flow.setOrientation(Orientation.VERTICAL);
         flow.setVgap(10);
-        ObservableList<String> tracks = FXCollections.observableArrayList("track1", "track2", "track3", "track4", "track5", "track6", "track7");
-        ListView<String> tracksListView = new ListView<String>(tracks);
+
+        FlowPane bottom_playlist_menu = new FlowPane();
+        bottom_playlist_menu.setOrientation(Orientation.HORIZONTAL);
+        bottom_playlist_menu.setLayoutX(440);
+        bottom_playlist_menu.setLayoutY(670);
+        bottom_playlist_menu.setHgap(10);
+        bottom_playlist_menu.setMinWidth(575);
+        bottom_playlist_menu.setMinHeight(200);
+        bottom_playlist_menu.setBackground(new Background(new BackgroundFill(Color.rgb(36, 30, 57), CornerRadii.EMPTY, Insets.EMPTY)));
+        bottom_playlist_menu.setAlignment(Pos.TOP_CENTER);
+
+        Button add_button = new Button("");
+        add_button.setStyle("-fx-background-image: url('/ui/icons/add.png'); " +
+                "-fx-background-size: cover;" + "-fx-background-color:transparent;");
+        add_button.setMinSize(80,80);
+        flow.setHgap(10);
+
+
         tracksListView.setStyle("-fx-control-inner-background: \"#241E39\";" + "-fx-font-size: 20px;"
-                + "-fx-font-family: Consolas;" + "-fx-background-insets: 0 ;");
+                + "-fx-font-family: Consolas;" + "-fx-background-color: black;");
+
+        add_button.setOnAction(actionEvent -> {
+            Timeline timeline = new Timeline();
+            timeline.getKeyFrames().addAll(
+                    new KeyFrame(Duration.ZERO,
+                            new KeyValue(add_button.opacityProperty(), 0.1)),
+                    new KeyFrame(new Duration(500),
+                            new KeyValue(add_button.opacityProperty(), 1)));
+            timeline.play();
+            DirectoryChooser dir_choice = new DirectoryChooser();
+            File dir = dir_choice.showDialog(stage);
+            if (dir != null) {
+                MediaDataParser parser = new MediaDataParser(dir.getAbsolutePath());
+                parser.parse();
+                Dialog dialog = new TextInputDialog("playlist");
+                dialog.setTitle("set playlist name");
+                dialog.setHeaderText("Enter name, or use default playlist name.");
+
+                Optional result = dialog.showAndWait();
+                String entered = "none.";
+
+                if (result.isPresent()) {
+
+                    entered = result.toString();
+                }
+                try {
+                    insert_into_db(parser.getFile_list(), entered);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+                try {
+                    insert_tracks_to_view(entered, tracksListView);
+
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+                cfg.set_current_playlist(entered);
+                try {
+                    cfg.write_cfg_state();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
         tracksListView.setMinWidth(flow.getMinWidth());
         tracksListView.setMinHeight(670);
+        bottom_playlist_menu.getChildren().add(add_button);
+
 
         flow.getChildren().add(tracksListView);
 
         screen.getChildren().add(grid);
         screen.getChildren().add(flow);
-
-
+        screen.getChildren().add(bottom_playlist_menu);
 
         return screen;
     }
@@ -188,5 +266,36 @@ public class MainScreen extends Group {
         grid.prefWidthProperty().bind(scene.widthProperty());
         grid.setAlignment(Pos.TOP_CENTER);
         grid.prefHeightProperty().bind(scene.heightProperty());
+    }
+
+    private void insert_tracks_to_view(String playlist, ListView<String> tracksListView) throws SQLException {
+        DatabaseController db = new DatabaseController();
+        ObservableList<String> tracks = db.get_tracks(playlist);
+        tracksListView.setItems(tracks);
+    }
+
+    public void set_stage(Stage s){
+        stage = s;
+    }
+    private void insert_into_db(List<File> fl, String playlist) throws SQLException {
+        file_list.addAll(fl);
+        List<MetaData> md = new ArrayList<MetaData>();
+        for(File f : file_list){
+            md.add(new MetaData(f));
+        }
+        DatabaseController db = new DatabaseController();
+        db.move_data_to_db(md, playlist);
+    }
+    public void set_current_playlist() throws SQLException, IOException {
+        String playlist = cfg.get_current_playlist();
+        if(playlist.equals("NULL")){
+            return;
+        }
+        else
+        {
+            insert_tracks_to_view(playlist, tracksListView);
+            cfg.set_current_playlist(playlist);
+            cfg.write_cfg_state();
+        }
     }
 }

@@ -4,12 +4,13 @@ import java.io.*;
 
 public class Config {
     private Boolean first_run;
-    private String theme;
+    private String theme, current_playlist;
     private Integer track_id, timeline_minutes, timeline_seconds;
     public Config(){
         first_run = true;
         theme = "DEFAULT";
         track_id = timeline_minutes = timeline_seconds = 0;
+        current_playlist = "";
     }
     public void read_cfg(){
         File config = new File("./player.cfg");
@@ -18,6 +19,7 @@ public class Config {
             first_run = true;
             theme = "DEFAULT";
             track_id = timeline_minutes = timeline_seconds = 0;
+            current_playlist = "";
         }
         else{
             BufferedReader reader;
@@ -51,6 +53,10 @@ public class Config {
                     if(line.contains("SECONDS")){
                         timeline_seconds = Integer.parseInt(line.substring(8));
                     }
+                    line = reader.readLine();
+                    if(line.contains("CURRENT_PLAYLIST")){
+                        current_playlist = line.substring(17);
+                    }
                 }
                 reader.close();
             }
@@ -62,8 +68,16 @@ public class Config {
     public Boolean is_started(){
         return first_run;
     }
+
     public void set_start_flag(Boolean flag){
         first_run = flag;
+    }
+
+    public String get_current_playlist(){
+        return current_playlist;
+    }
+    public void set_current_playlist(String playlist){
+        current_playlist = playlist;
     }
     public void write_cfg_state() throws IOException {
         BufferedWriter bw = new BufferedWriter(new FileWriter(new File("./player.cfg")));
@@ -73,6 +87,7 @@ public class Config {
         bw.write("TRACK_ID:"+track_id+"\n");
         bw.write("MINUTES:"+timeline_minutes+"\n");
         bw.write("SECONDS:"+timeline_seconds+"\n");
+        bw.write("CURRENT_PLAYLIST:" + current_playlist + "\n");
         bw.close();
     }
 }

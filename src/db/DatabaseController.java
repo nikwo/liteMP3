@@ -1,5 +1,8 @@
 package db;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import org.postgresql.core.SqlCommand;
 import parser.MetaData;
 
 import javax.swing.text.StyledEditorKit;
@@ -41,8 +44,8 @@ public class DatabaseController {
                 st.executeUpdate("CREATE TABLE IF NOT EXISTS groups_t(group_name VARCHAR(150) PRIMARY KEY);");
                 st.executeUpdate("CREATE TABLE IF NOT EXISTS tracks(track_id SERIAL PRIMARY KEY, genre VARCHAR(150) REFERENCES genres," +
                         " album SERIAL REFERENCES albums, group_name VARCHAR(150) REFERENCES groups_t, track_name VARCHAR(250)," +
-                        " track_path VARCHAR(200) UNIQUE NOT NULL," +
-                        " UNIQUE(genre, album, track_name, track_path, group_name));");
+                        " track_path VARCHAR(200) UNIQUE NOT NULL, duration VARCHAR(30)," +
+                        " UNIQUE(genre, album, track_name, track_path, group_name, duration));");
                 st.executeUpdate("CREATE TABLE IF NOT EXISTS playlists(playlist_name VARCHAR(250) PRIMARY KEY, tracks_amount INTEGER);");
                 st.executeUpdate("CREATE TABLE IF NOT EXISTS playlist_track_rel(playlist VARCHAR(250) REFERENCES playlists," +
                         " track_id SERIAL REFERENCES tracks, PRIMARY KEY (playlist, track_id));");
@@ -61,7 +64,7 @@ public class DatabaseController {
         for (MetaData md : data) {
             String genre = md.get_genre(), album = md.get_album_name(), image_path = md.get_image_path(),
                     group_name = md.get_group_name(), path = md.get_track_path(), year = md.get_year(),
-                    track_name = md.get_track_name();
+                    track_name = md.get_track_name(), duration = md.get_duration();
 
 
             Boolean genre_inserted = insert_genre(genre), album_inserted = insert_album(album, year, image_path),
@@ -69,7 +72,7 @@ public class DatabaseController {
             ResultSet res= st.executeQuery("select album_id from albums where album_name = \'" + album +
                     "\' and path_to_image = \'" + image_path + "\' and release_year = \'" + year + "\';");
             res.next();
-            Boolean track_inserted = insert_track(res.getInt(1), genre, track_name, path, group_name);
+            Boolean track_inserted = insert_track(res.getInt(1), genre, track_name, path, group_name, duration);
             ResultSet res2 = st.executeQuery("select track_id from tracks where " +
                     "genre = \'" + genre + "\' and album = " + res.getInt(1) +
                     " and group_name = \'" + group_name + "\' and track_name = \'" + track_name +"\';");
@@ -124,31 +127,31 @@ public class DatabaseController {
         }
         return true;
     }
-    private Boolean insert_track(int album_id, String genre, String track_name, String path, String group){
+    private Boolean insert_track(int album_id, String genre, String track_name, String path, String group, String duration){
         try {
             Statement st = connection.createStatement();
-            st.executeUpdate("INSERT INTO tracks(genre, album, track_name, track_path, group_name) VALUES(\'" +
+            st.executeUpdate("INSERT INTO tracks(genre, album, track_name, track_path, group_name, duration) VALUES(\'" +
                     genre + "\', \'" + album_id + "\', \'" + track_name +
-                    "\', \'" + path + "\', \'" + group + "\');");
+                    "\', \'" + path + "\', \'" + group + "\', \'" + duration + "\');");
         }catch (SQLException e){
             return false;
         }
         return true;
     }
-    private Boolean insert_playlist_track_relation(String playlist, int track_id){
-        try {
-            Statement st = connection.createStatement();
-            st.executeUpdate("INSERT INTO playlist_track_rel(playlist, track_id) VALUES (\'" + playlist + "\', " + track_id + ");");
-        }catch (SQLException e){
-            return false;
-        }
-        return true;
-    }
+
     private Boolean insert_playlist(String playlist, int size){
         try {
             Statement st = connection.createStatement();
             st.executeUpdate("INSERT INTO playlists VALUES (\'" + playlist + "\', " + size + ");");
         }catch (SQLException e){
+            try {
+                Statement st = connection.createStatement();
+                st.executeUpdate("UPDATE playlists SET tracks_amount = tracks_amount + " + size + " WHERE playlist_name = \'" + playlist + "\';");
+            }
+            catch (SQLException ex){
+                ex.printStackTrace();
+                return false;
+            }
             return false;
         }
         return true;
@@ -156,10 +159,28 @@ public class DatabaseController {
     private Boolean insert_relation(String playlist, int track_id){
         try {
             Statement st = connection.createStatement();
+            playlist = MetaData.shield_literals(playlist);
             st.executeUpdate("INSERT INTO playlist_track_rel VALUES (\'" + playlist + "\', " + track_id + ");");
         }catch (SQLException e){
             return false;
         }
         return true;
+    }
+
+    public ObservableList<String> get_tracks(String playlist) throws SQLException {
+        Statement st = connection.createStatement();
+        ResultSet res;
+        try{
+            st = connection.createStatement();
+            res = st.executeQuery("select track_name from tracks where\n" +
+                    "\ttrack_id in (select track_id from playlist_track_rel where playlist = \'" + playlist + "\');");
+        }catch(SQLException e){
+            return null;
+        }
+        ObservableList<String> tracks = FXCollections.observableArrayList();
+        while(res.next()){
+            tracks.add(res.getString(1));
+        }
+        return tracks;
     }
 }

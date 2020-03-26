@@ -12,7 +12,7 @@ import org.xml.sax.helpers.DefaultHandler;
 import java.io.*;
 
 public class MetaData {
-    private String _track_name, _group_name, _genre, _year, _track_path, _image_path, _album;
+    private String _track_name, _group_name, _genre, _year, _track_path, _image_path, _album, _duration;
     public MetaData(String name, String group, String genre, String year){
         _track_name = name;
         _group_name = group;
@@ -36,6 +36,14 @@ public class MetaData {
             _year = metadata.get("xmpDM:releaseDate");
             _track_path = file.getAbsolutePath();
             _album = metadata.get("xmpDM:album");
+            _duration = metadata.get("xmpDM:duration");
+
+            double milis = Double.valueOf(_duration);
+            long second = (long) (milis / 1000) % 60;
+            long minute = (long) (milis / (1000 * 60)) % 60;
+            long hour = (long) (milis / (1000 * 60 * 60)) % 24;
+
+            _duration = hour != 0 ? String.format("%02dh:%02dm:%02ds", hour, minute, second) : String.format("%02dm:%02ds", minute, second);
 
             if (_genre == null)
                 _genre = "unknown";
@@ -53,6 +61,7 @@ public class MetaData {
             _genre = shield_literals(_genre);
             _album = shield_literals(_album);
             _track_path = shield_literals(_track_path);
+
 
             // Now getting image with ffmpeg
             File img = new File(file.getParent()+"\\cover.jpg");
@@ -114,8 +123,11 @@ public class MetaData {
     public String get_album_name()  {
         return _album;
     }
-    private String shield_literals(String input){
-        String out = input.replace("\'", "\'\'");
-        return out;
+    public static String shield_literals(String input){
+        return input.replace("\'", "\'\'");
+    }
+
+    public String get_duration(){
+        return _duration;
     }
 }
