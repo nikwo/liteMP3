@@ -2,11 +2,11 @@ package db;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import org.postgresql.core.SqlCommand;
+import org.apache.tika.metadata.Metadata;
 import parser.MetaData;
 
-import javax.swing.text.StyledEditorKit;
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public class DatabaseController {
@@ -167,19 +167,23 @@ public class DatabaseController {
         return true;
     }
 
-    public ObservableList<String> get_tracks(String playlist) throws SQLException {
-        Statement st = connection.createStatement();
+    public List<MetaData> get_tracks(String playlist) throws SQLException {
+        Statement st;
         ResultSet res;
         try{
             st = connection.createStatement();
-            res = st.executeQuery("select track_name from tracks where\n" +
-                    "\ttrack_id in (select track_id from playlist_track_rel where playlist = \'" + playlist + "\');");
+            res = st.executeQuery("select t.*, a.* from tracks t, albums a where " +
+                    "t.track_id in (select track_id from playlist_track_rel where playlist = \'" + playlist + "\') and t.album = a.album_id;");
         }catch(SQLException e){
             return null;
         }
-        ObservableList<String> tracks = FXCollections.observableArrayList();
+        List<MetaData> tracks = new ArrayList<>();
         while(res.next()){
-            tracks.add(res.getString(1));
+            MetaData md = new MetaData(res.getString("track_name"), res.getString("group_name"),
+                    res.getString("genre"), res.getString("release_year"));
+            md.set_track_path(res.getString("track_path"));
+            md.set_image_path(res.getString("path_to_image"));
+            tracks.add(md);
         }
         return tracks;
     }

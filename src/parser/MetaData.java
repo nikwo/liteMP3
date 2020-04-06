@@ -13,13 +13,15 @@ import java.io.*;
 
 public class MetaData {
     private String _track_name, _group_name, _genre, _year, _track_path, _image_path, _album, _duration;
-    public MetaData(String name, String group, String genre, String year){
+
+    public MetaData(String name, String group, String genre, String year) {
         _track_name = name;
         _group_name = group;
         _genre = genre;
         _year = year;
     }
-    public MetaData(File file){
+
+    public MetaData(File file) {
         try {
             InputStream input = new FileInputStream(new File(file.getAbsolutePath()));
             ContentHandler handler = new DefaultHandler();
@@ -64,16 +66,15 @@ public class MetaData {
 
 
             // Now getting image with ffmpeg
-            File img = new File(file.getParent()+"\\cover.jpg");
-            if(!img.exists()) {
+            File img = new File(file.getParent() + "\\cover.jpg");
+            if (!img.exists()) {
                 ProcessBuilder pb = new ProcessBuilder("ffmpeg", "-i", "\"" + file.getAbsolutePath() + "\"", "\"" + file.getParent() + "\\cover.jpg\"");
                 Process process = pb.start();
                 OutputStream outputStream = process.getOutputStream();
-                if(outputStream.toString().contains("Output file #0 does not contain any stream")){
+                if (outputStream.toString().contains("Output file #0 does not contain any stream")) {
                     _image_path = "null";
                 }
-            }
-            else {
+            } else {
                 _image_path = file.getParent() + "\\cover.jpg";
                 _image_path = shield_literals(_image_path);
             }
@@ -89,11 +90,16 @@ public class MetaData {
         }
     }
 
-    public void set_track_path(String track_path){
+    public void set_track_path(String track_path) {
         _track_path = track_path;
     }
-    public void set_image_path(String image_path){
+
+    public void set_image_path(String image_path) {
         _image_path = image_path;
+    }
+
+    public void set_duration(String duration) {
+        _duration = duration;
     }
 
     public String get_genre() {
@@ -120,14 +126,15 @@ public class MetaData {
         return _image_path;
     }
 
-    public String get_album_name()  {
+    public String get_album_name() {
         return _album;
     }
-    public static String shield_literals(String input){
+
+    public static String shield_literals(String input) {
         return input.replace("\'", "\'\'");
     }
 
-    public String get_duration(){
+    public String get_duration() {
         return _duration;
     }
 }

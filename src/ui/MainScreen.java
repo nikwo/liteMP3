@@ -5,6 +5,7 @@ import db.DatabaseController;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
@@ -28,6 +29,7 @@ import java.util.Vector;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import mediaplayer.MP3Player;
 import parser.MediaDataParser;
 import parser.MetaData;
 
@@ -41,6 +43,7 @@ public class MainScreen extends Group {
     private List<File> file_list;
     private Config cfg;
     private ListView<String> tracksListView;
+    private MP3Player player;
     public MainScreen(Stage s, Config c){
         screen = new Group();
         grid = new GridPane();
@@ -51,6 +54,7 @@ public class MainScreen extends Group {
         file_list = new ArrayList<>();
         cfg = c;
         tracksListView  = new ListView<>();
+        player = null;
     }
     public Group get_screen(){
         grid.setBackground(new Background(new BackgroundFill(Color.rgb(77, 69, 99), CornerRadii.EMPTY, Insets.EMPTY)));
@@ -201,8 +205,9 @@ public class MainScreen extends Group {
         flow.setHgap(10);
 
 
-        tracksListView.setStyle("-fx-control-inner-background: \"#241E39\";" + "-fx-font-size: 20px;"
+        tracksListView.setStyle("-fx-control-inner-background: \"#241E39\";" + "-fx-font-size: 18px;"
                 + "-fx-font-family: Consolas;" + "-fx-background-color: black;");
+        tracksListView.setMaxWidth(600);
 
         add_button.setOnAction(actionEvent -> {
             Timeline timeline = new Timeline();
@@ -221,12 +226,12 @@ public class MainScreen extends Group {
                 dialog.setTitle("set playlist name");
                 dialog.setHeaderText("Enter name, or use default playlist name.");
 
-                Optional result = dialog.showAndWait();
+                Optional<String> result = dialog.showAndWait();
                 String entered = "none.";
 
                 if (result.isPresent()) {
 
-                    entered = result.toString();
+                    entered = result.get();
                 }
                 try {
                     insert_into_db(parser.getFile_list(), entered);
@@ -246,6 +251,11 @@ public class MainScreen extends Group {
                     e.printStackTrace();
                 }
             }
+        });
+
+        play_button.setOnAction(actionEvent -> {
+            int ind = tracksListView.getSelectionModel().getSelectedIndex();
+            player.play(ind);
         });
 
         tracksListView.setMinWidth(flow.getMinWidth());
@@ -270,8 +280,13 @@ public class MainScreen extends Group {
 
     private void insert_tracks_to_view(String playlist, ListView<String> tracksListView) throws SQLException {
         DatabaseController db = new DatabaseController();
-        ObservableList<String> tracks = db.get_tracks(playlist);
-        tracksListView.setItems(tracks);
+        List<MetaData> tracks = db.get_tracks(playlist);
+        ObservableList<String> t = FXCollections.observableArrayList();
+        for(MetaData track : tracks){
+            t.add(track.get_group_name()+" - "+track.get_track_name());
+        }
+        tracksListView.setItems(t);
+        player = new MP3Player(tracks);
     }
 
     public void set_stage(Stage s){
