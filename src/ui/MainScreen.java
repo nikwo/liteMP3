@@ -14,6 +14,7 @@ import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.scene.media.MediaPlayer;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
@@ -151,26 +152,6 @@ public class MainScreen extends Group {
         track_image.setMaxWidth(440);
         track_image.setMaxHeight(580);
 
-        Vector<Button> btn_vec = new Vector<>();
-        btn_vec.add(menu_button);
-        btn_vec.add(next_button);
-        btn_vec.add(prev_button);
-        btn_vec.add(play_button);
-        btn_vec.add(cycle_button);
-        btn_vec.add(random_button);
-
-        for(Button btn : btn_vec){
-            btn.setOnAction(actionEvent -> {
-                Timeline timeline = new Timeline();
-                timeline.getKeyFrames().addAll(
-                        new KeyFrame(Duration.ZERO,
-                                new KeyValue(btn.opacityProperty(), 0.1)),
-                        new KeyFrame(new Duration(500),
-                                new KeyValue(btn.opacityProperty(), 1)));
-                timeline.play();
-            });
-        }
-
         grid.add(menu_button, 0, 0);
         grid.add(track_name, 1, 0, 3, 1);
         grid.add(track_image, 0, 1, 5, 1);
@@ -254,14 +235,60 @@ public class MainScreen extends Group {
         });
 
         play_button.setOnAction(actionEvent -> {
-            int ind = tracksListView.getSelectionModel().getSelectedIndex();
-            player.play(ind);
+            configure_animation(play_button);
+            if(player.get_state() != MediaPlayer.Status.PLAYING) {
+                if(player.get_state() == MediaPlayer.Status.PAUSED){
+                    if(player.get_ind() == tracksListView.getSelectionModel().getSelectedIndex()) {
+                        player.resume();
+                        play_button.setStyle("-fx-background-image: url('/ui/icons/pause_icon.png'); " +
+                                "-fx-background-size: cover;" + "-fx-background-color:transparent;");
+                    }
+                    else
+                    {
+                        int ind = tracksListView.getSelectionModel().getSelectedIndex();
+                        if (ind < 0)
+                            ind = 0;
+                        player.play(ind, tracksListView);
+                        play_button.setStyle("-fx-background-image: url('/ui/icons/pause_icon.png'); " +
+                                "-fx-background-size: cover;" + "-fx-background-color:transparent;");
+                    }
+                }
+                else {
+                    int ind = tracksListView.getSelectionModel().getSelectedIndex();
+                    if (ind < 0) {
+                        ind = 0;
+                        tracksListView.getSelectionModel().clearAndSelect(0);
+                    }
+                    player.play(ind, tracksListView);
+                    play_button.setStyle("-fx-background-image: url('/ui/icons/pause_icon.png'); " +
+                            "-fx-background-size: cover;" + "-fx-background-color:transparent;");
+                }
+            }
+            else{
+                play_button.setStyle("-fx-background-image: url('/ui/icons/play_icon.png'); " +
+                        "-fx-background-size: cover;" + "-fx-background-color:transparent;");
+                player.pause();
+            }
+        });
+
+        next_button.setOnAction(actionEvent -> {
+            configure_animation(next_button);
+            if(player.get_state() == MediaPlayer.Status.PLAYING){
+                player.next(tracksListView);
+            }
+        });
+
+        prev_button.setOnAction(actionEvent -> {
+            configure_animation(prev_button);
+            if(player.get_state() == MediaPlayer.Status.PLAYING){
+                player.prev(tracksListView);
+            }
         });
 
         tracksListView.setMinWidth(flow.getMinWidth());
         tracksListView.setMinHeight(670);
         bottom_playlist_menu.getChildren().add(add_button);
-
+        tracksListView.getSelectionModel().select(0);
 
         flow.getChildren().add(tracksListView);
 
@@ -292,6 +319,7 @@ public class MainScreen extends Group {
     public void set_stage(Stage s){
         stage = s;
     }
+
     private void insert_into_db(List<File> fl, String playlist) throws SQLException {
         file_list.addAll(fl);
         List<MetaData> md = new ArrayList<MetaData>();
@@ -301,6 +329,7 @@ public class MainScreen extends Group {
         DatabaseController db = new DatabaseController();
         db.move_data_to_db(md, playlist);
     }
+
     public void set_current_playlist() throws SQLException, IOException {
         String playlist = cfg.get_current_playlist();
         if(playlist.equals("NULL")){
@@ -312,5 +341,15 @@ public class MainScreen extends Group {
             cfg.set_current_playlist(playlist);
             cfg.write_cfg_state();
         }
+    }
+
+    private void configure_animation(Button btn){
+        Timeline timeline = new Timeline();
+        timeline.getKeyFrames().addAll(
+                new KeyFrame(Duration.ZERO,
+                        new KeyValue(btn.opacityProperty(), 0.1)),
+                new KeyFrame(new Duration(500),
+                        new KeyValue(btn  .opacityProperty(), 1)));
+        timeline.play();
     }
 }
