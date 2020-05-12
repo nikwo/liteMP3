@@ -134,6 +134,11 @@ public class MetaData {
         return input.replace("\'", "\'\'");
     }
 
+    public static String to_url(String input) {
+        File f = new File(input);
+        return f.toURI().toString();
+    }
+
     public String get_duration() {
         return _duration;
     }

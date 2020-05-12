@@ -239,7 +239,7 @@ public class MainScreen extends Group {
             if(player.get_state() != MediaPlayer.Status.PLAYING) {
                 if(player.get_state() == MediaPlayer.Status.PAUSED){
                     if(player.get_ind() == tracksListView.getSelectionModel().getSelectedIndex()) {
-                        player.resume();
+                        player.resumeM();
                         play_button.setStyle("-fx-background-image: url('/ui/icons/pause_icon.png'); " +
                                 "-fx-background-size: cover;" + "-fx-background-color:transparent;");
                     }
@@ -248,7 +248,7 @@ public class MainScreen extends Group {
                         int ind = tracksListView.getSelectionModel().getSelectedIndex();
                         if (ind < 0)
                             ind = 0;
-                        player.play(ind, tracksListView);
+                        player.play(ind, tracksListView, track_image);
                         play_button.setStyle("-fx-background-image: url('/ui/icons/pause_icon.png'); " +
                                 "-fx-background-size: cover;" + "-fx-background-color:transparent;");
                     }
@@ -259,7 +259,7 @@ public class MainScreen extends Group {
                         ind = 0;
                         tracksListView.getSelectionModel().clearAndSelect(0);
                     }
-                    player.play(ind, tracksListView);
+                    player.play(ind, tracksListView, track_image);
                     play_button.setStyle("-fx-background-image: url('/ui/icons/pause_icon.png'); " +
                             "-fx-background-size: cover;" + "-fx-background-color:transparent;");
                 }
@@ -274,14 +274,45 @@ public class MainScreen extends Group {
         next_button.setOnAction(actionEvent -> {
             configure_animation(next_button);
             if(player.get_state() == MediaPlayer.Status.PLAYING){
-                player.next(tracksListView);
+                player.next(tracksListView, track_image);
             }
         });
 
         prev_button.setOnAction(actionEvent -> {
             configure_animation(prev_button);
             if(player.get_state() == MediaPlayer.Status.PLAYING){
-                player.prev(tracksListView);
+                player.prev(tracksListView, track_image);
+            }
+        });
+
+        random_button.setOnAction(actionEvent -> {
+            if(!player.get_rnd_flag()) {
+                random_button.setOpacity(0.5);
+                player.set_rnd_flag(true);
+            }
+            else{
+                random_button.setOpacity(1);
+                player.set_rnd_flag(false);
+            }
+        });
+
+        cycle_button.setOnAction(actionEvent -> {
+            if(!player.get_cycle_flag()) {
+                cycle_button.setOpacity(0.5);
+                player.set_cycle_flag(true);
+            }
+            else{
+                cycle_button.setOpacity(1);
+                player.set_cycle_flag(false);
+            }
+        });
+
+        tracksListView.setOnMouseClicked(mouseEvent -> {
+            if (mouseEvent.getClickCount() == 2) {
+                int current = tracksListView.getSelectionModel().getSelectedIndex();
+                player.play(current, tracksListView, track_image);
+                play_button.setStyle("-fx-background-image: url('/ui/icons/pause_icon.png'); " +
+                        "-fx-background-size: cover;" + "-fx-background-color:transparent;");
             }
         });
 
