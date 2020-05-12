@@ -39,14 +39,15 @@ public class MetaData {
             _track_path = file.getAbsolutePath();
             _album = metadata.get("xmpDM:album");
             _duration = metadata.get("xmpDM:duration");
-
-            double milis = Double.valueOf(_duration);
-            long second = (long) (milis / 1000) % 60;
-            long minute = (long) (milis / (1000 * 60)) % 60;
-            long hour = (long) (milis / (1000 * 60 * 60)) % 24;
-
+            try {
+                double milis = Double.valueOf(_duration);
+                long second = (long) (milis / 1000) % 60;
+                long minute = (long) (milis / (1000 * 60)) % 60;
+                long hour = (long) (milis / (1000 * 60 * 60)) % 24;
             _duration = hour != 0 ? String.format("%02dh:%02dm:%02ds", hour, minute, second) : String.format("%02dm:%02ds", minute, second);
-
+            }catch (Exception e){
+                e.printStackTrace();
+            }
             if (_genre == null)
                 _genre = "unknown";
             if (_album == null)

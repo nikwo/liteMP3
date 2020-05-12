@@ -12,6 +12,7 @@ import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Scene;
+import javafx.scene.chart.PieChart;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.media.MediaPlayer;
@@ -102,7 +103,7 @@ public class MainScreen extends Group {
         AnchorPane.setBottomAnchor(program_name, 0.0);
 
         track_name.setTextFill(Color.web("#f5c493"));
-        track_name.setFont(new Font("Georgia", 24));
+        track_name.setFont(new Font("Georgia", 14));
         track_name.setAlignment(Pos.TOP_CENTER);
         track_name.setText("Track name");
         track_name.setTextAlignment(TextAlignment.JUSTIFY);
@@ -118,6 +119,34 @@ public class MainScreen extends Group {
         menu_button.setStyle("-fx-background-image: url('/ui/icons/menu_icon.png'); "+
                 "-fx-background-size: cover; " + "-fx-background-color:transparent;");
         menu_button.setMinSize(80, 80);
+        menu_button.setOnAction(actionEvent -> {
+            DatabaseController db = new DatabaseController();
+            ObservableList<String> t = FXCollections.observableArrayList();
+            try {
+                t = db.playlists();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+
+            ChoiceDialog<String> choiceDialog = new ChoiceDialog<>("Choose current playlist", t);
+            choiceDialog.setContentText("playlist");
+            Optional<String> result = choiceDialog.showAndWait();
+            String entered = "";
+            if(result.isPresent()){
+                entered = result.get();
+            }
+            if(!entered.equals("")){
+                cfg.set_current_playlist(entered);
+                player.stopM();
+                try {
+                    set_current_playlist();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
 
         Button prev_button = new Button("");
         prev_button.setBackground(new Background(new BackgroundFill(Color.rgb(108, 79, 130), CornerRadii.EMPTY, Insets.EMPTY)));
@@ -248,7 +277,7 @@ public class MainScreen extends Group {
                         int ind = tracksListView.getSelectionModel().getSelectedIndex();
                         if (ind < 0)
                             ind = 0;
-                        player.play(ind, tracksListView, track_image);
+                        player.play(ind, tracksListView, track_image, track_name);
                         play_button.setStyle("-fx-background-image: url('/ui/icons/pause_icon.png'); " +
                                 "-fx-background-size: cover;" + "-fx-background-color:transparent;");
                     }
@@ -259,7 +288,7 @@ public class MainScreen extends Group {
                         ind = 0;
                         tracksListView.getSelectionModel().clearAndSelect(0);
                     }
-                    player.play(ind, tracksListView, track_image);
+                    player.play(ind, tracksListView, track_image, track_name);
                     play_button.setStyle("-fx-background-image: url('/ui/icons/pause_icon.png'); " +
                             "-fx-background-size: cover;" + "-fx-background-color:transparent;");
                 }
@@ -274,14 +303,14 @@ public class MainScreen extends Group {
         next_button.setOnAction(actionEvent -> {
             configure_animation(next_button);
             if(player.get_state() == MediaPlayer.Status.PLAYING){
-                player.next(tracksListView, track_image);
+                player.next(tracksListView, track_image, track_name);
             }
         });
 
         prev_button.setOnAction(actionEvent -> {
             configure_animation(prev_button);
             if(player.get_state() == MediaPlayer.Status.PLAYING){
-                player.prev(tracksListView, track_image);
+                player.prev(tracksListView, track_image, track_name);
             }
         });
 
@@ -310,7 +339,7 @@ public class MainScreen extends Group {
         tracksListView.setOnMouseClicked(mouseEvent -> {
             if (mouseEvent.getClickCount() == 2) {
                 int current = tracksListView.getSelectionModel().getSelectedIndex();
-                player.play(current, tracksListView, track_image);
+                player.play(current, tracksListView, track_image, track_name);
                 play_button.setStyle("-fx-background-image: url('/ui/icons/pause_icon.png'); " +
                         "-fx-background-size: cover;" + "-fx-background-color:transparent;");
             }

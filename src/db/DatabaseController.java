@@ -8,6 +8,7 @@ import parser.MetaData;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 public class DatabaseController {
     // АААА КОСТЫЛЬ!!!11!!!1
@@ -170,13 +171,10 @@ public class DatabaseController {
     public List<MetaData> get_tracks(String playlist) throws SQLException {
         Statement st;
         ResultSet res;
-        try{
-            st = connection.createStatement();
-            res = st.executeQuery("select t.*, a.* from tracks t, albums a where " +
-                    "t.track_id in (select track_id from playlist_track_rel where playlist = \'" + playlist + "\') and t.album = a.album_id;");
-        }catch(SQLException e){
-            return null;
-        }
+        st = connection.createStatement();
+        res = st.executeQuery("select t.*, a.* from tracks t, albums a where " +
+                "t.track_id in (select track_id from playlist_track_rel where playlist = \'" + playlist + "\') and t.album = a.album_id;");
+
         List<MetaData> tracks = new ArrayList<>();
         while(res.next()){
             MetaData md = new MetaData(res.getString("track_name"), res.getString("group_name"),
@@ -186,5 +184,17 @@ public class DatabaseController {
             tracks.add(md);
         }
         return tracks;
+    }
+
+    public ObservableList<String> playlists() throws SQLException{
+        ObservableList<String> data = FXCollections.observableArrayList();
+        Statement st;
+        ResultSet res;
+        st = connection.createStatement();
+        res = st.executeQuery("select playlist_name from playlists");
+        while(res.next()){
+            data.add(res.getString("playlist_name"));
+        }
+        return data;
     }
 }

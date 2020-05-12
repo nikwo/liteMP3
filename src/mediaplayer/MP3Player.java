@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.Stack;
 
+import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.Region;
 import javafx.scene.media.Media;
@@ -37,64 +38,65 @@ public class MP3Player{
         cycle = false;
     }
 
-    public void play(ListView<String> lv, Region track_image) {
+    public void play(ListView<String> lv, Region track_image, Label track_name) {
         track_path = tracks.get(ind).get_track_path();
         Media m = new Media(new File(track_path).toURI().toString());
         player = new MediaPlayer(m);
-        if(player.getStatus() != MediaPlayer.Status.PLAYING)
-            player.play();
-        else player.stop();
-        player.setOnEndOfMedia(()-> next(lv, track_image));
+        player.setOnEndOfMedia(()-> next(lv, track_image, track_name));
         String path = tracks.get(ind).get_image_path();
         if(!path.equals(""))
             track_image.setStyle("-fx-background-image: url('"+ MetaData.to_url(tracks.get(ind).get_image_path()) +"'); "+
                 "-fx-background-size: cover; ");
         else track_image.setStyle("-fx-background-image: url('/ui/icons/no_picture.png'); "+
                 "-fx-background-size: cover; ");
+        track_name.setText(tracks.get(ind).get_group_name() + " - " + tracks.get(ind).get_track_name());
+        player.setVolume(0.2);
+        player.play();
     }
 
-    public void play(int index, ListView<String> lv, Region track_image){
+    public void play(int index, ListView<String> lv, Region track_image, Label track_name){
+        player.stop();
         track_path = tracks.get(index).get_track_path();
         player = new MediaPlayer(new Media(new File(track_path).toURI().toString()));
-        player.setVolume(0.2);
-        if(player.getStatus() != MediaPlayer.Status.PLAYING)
-            player.play();
-        else player.stop();
+
         ind = index;
-        player.setOnEndOfMedia(()-> next(lv, track_image));
+        player.setOnEndOfMedia(()-> next(lv, track_image, track_name));
         String path = tracks.get(ind).get_image_path();
         if(!path.equals(""))
             track_image.setStyle("-fx-background-image: url('"+ MetaData.to_url(path) +"'); "+
                     "-fx-background-size: cover; ");
         else track_image.setStyle("-fx-background-image: url('/ui/icons/no_picture.png'); "+
                 "-fx-background-size: cover; ");
+        track_name.setText(tracks.get(index).get_group_name() + " - " + tracks.get(index).get_track_name());
+        player.setVolume(0.2);
+        player.play();
     }
 
     public void stopM(){
         player.stop();
     }
 
-    public void next(ListView<String> lv, Region track_image){
+    public void next(ListView<String> lv, Region track_image, Label track_name){
         if(!rnd)
             ind++;
         else{
             Random random = new Random();
             ind = random.nextInt(tracks.size());
         }
+        if(ind > tracks.size() - 1)
+            ind = 0;
         select_cell(lv);
-        track_path = tracks.get(ind).get_track_path();
-        Media m = new Media(new File(track_path).toURI().toString());
-        player = new MediaPlayer(m);
-        play(lv, track_image);
+        player.stop();
+        play(lv, track_image, track_name);
     }
 
-    public void prev(ListView<String> lv, Region track_image){
+    public void prev(ListView<String> lv, Region track_image, Label track_name){
         ind--;
+        if(ind < 0)
+            ind = tracks.size() - 1;
         select_cell(lv);
-        track_path = tracks.get(ind).get_track_path();
-        Media m = new Media(new File(track_path).toURI().toString());
-        player = new MediaPlayer(m);
-        play(lv, track_image);
+        player.stop();
+        play(lv, track_image, track_name);
     }
 
     public MediaPlayer.Status get_state(){
