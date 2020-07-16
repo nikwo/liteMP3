@@ -49,7 +49,8 @@ public class MP3Player{
                 "-fx-background-size: cover; ");
         else track_image.setStyle("-fx-background-image: url('/ui/icons/no_picture.png'); "+
                 "-fx-background-size: cover; ");
-        track_name.setText(tracks.get(ind).get_group_name() + " - " + tracks.get(ind).get_track_name());
+        track_name.setText(tracks.get(ind).get_group_name() + " - " + tracks.get(ind).get_track_name() + "\n" +
+                tracks.get(ind).get_album_name() + "\n" + tracks.get(ind).get_genre());
         player.setVolume(0.2);
         player.play();
     }
@@ -67,7 +68,8 @@ public class MP3Player{
                     "-fx-background-size: cover; ");
         else track_image.setStyle("-fx-background-image: url('/ui/icons/no_picture.png'); "+
                 "-fx-background-size: cover; ");
-        track_name.setText(tracks.get(index).get_group_name() + " - " + tracks.get(index).get_track_name());
+        track_name.setText(tracks.get(index).get_group_name() + " - " + tracks.get(index).get_track_name() + "\n" +
+                tracks.get(index).get_album_name() + "\n" + tracks.get(index).get_genre());
         player.setVolume(0.2);
         player.play();
     }

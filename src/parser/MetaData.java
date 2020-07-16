@@ -80,13 +80,7 @@ public class MetaData {
                 _image_path = shield_literals(_image_path);
             }
 
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (TikaException e) {
-            e.printStackTrace();
-        } catch (SAXException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (TikaException | SAXException | IOException e) {
             e.printStackTrace();
         }
     }
@@ -142,5 +136,9 @@ public class MetaData {
 
     public String get_duration() {
         return _duration;
+    }
+
+    public void set_album_name(String album) {
+        _album = album;
     }
 }

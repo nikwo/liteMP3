@@ -8,7 +8,6 @@ import parser.MetaData;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Stack;
 
 public class DatabaseController {
     // АААА КОСТЫЛЬ!!!11!!!1
@@ -33,6 +32,12 @@ public class DatabaseController {
         } else {
             System.out.println("Failed to make connection to database");
         }
+    }
+
+    public void create_views() throws SQLException{
+        Statement st = connection.createStatement();
+        st.executeUpdate("CREATE VIEW ALL_TRACKS AS SELECT * FROM tracks;");
+        st.executeUpdate("CREATE VIEW CORRUPTED_FILES AS SELECT * FROM tracks WHERE duration IS NULL;");
     }
 
     public Boolean init(Boolean is_first_run) {
@@ -175,15 +180,7 @@ public class DatabaseController {
         res = st.executeQuery("select t.*, a.* from tracks t, albums a where " +
                 "t.track_id in (select track_id from playlist_track_rel where playlist = \'" + playlist + "\') and t.album = a.album_id;");
 
-        List<MetaData> tracks = new ArrayList<>();
-        while(res.next()){
-            MetaData md = new MetaData(res.getString("track_name"), res.getString("group_name"),
-                    res.getString("genre"), res.getString("release_year"));
-            md.set_track_path(res.getString("track_path"));
-            md.set_image_path(res.getString("path_to_image"));
-            tracks.add(md);
-        }
-        return tracks;
+        return processLoop(res);
     }
 
     public ObservableList<String> playlists() throws SQLException{
@@ -196,5 +193,28 @@ public class DatabaseController {
             data.add(res.getString("playlist_name"));
         }
         return data;
+    }
+
+    public  List<MetaData> get_ordered_tracks(String playlist, String orderByCategory) throws SQLException{
+        Statement st;
+        ResultSet res;
+        st = connection.createStatement();
+        res = st.executeQuery("select t.*, a.* from tracks t, albums a where " +
+                "t.track_id in (select track_id from playlist_track_rel where playlist = \'" + playlist + "\') and t.album = a.album_id ORDER BY " + orderByCategory + ";");
+
+        return processLoop(res);
+    }
+
+    private List<MetaData> processLoop(ResultSet res) throws SQLException{
+        List<MetaData> tracks = new ArrayList<>();
+        while(res.next()){
+            MetaData md = new MetaData(res.getString("track_name"), res.getString("group_name"),
+                    res.getString("genre"), res.getString("release_year"));
+            md.set_album_name(res.getString("album_name"));
+            md.set_track_path(res.getString("track_path"));
+            md.set_image_path(res.getString("path_to_image"));
+            tracks.add(md);
+        }
+        return tracks;
     }
 }

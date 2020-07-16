@@ -11,29 +11,28 @@ import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
+import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.chart.PieChart;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
-
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Vector;
-
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import mediaplayer.MP3Player;
 import parser.MediaDataParser;
 import parser.MetaData;
+
+import static javafx.scene.control.PopupControl.USE_COMPUTED_SIZE;
 
 public class MainScreen extends Group {
     private Group screen;
@@ -44,6 +43,7 @@ public class MainScreen extends Group {
     private Stage stage;
     private List<File> file_list;
     private Config cfg;
+    private TreeItem<String> category;
     private ListView<String> tracksListView;
     private MP3Player player;
     public MainScreen(Stage s, Config c){
@@ -55,6 +55,7 @@ public class MainScreen extends Group {
         stage = s;
         file_list = new ArrayList<>();
         cfg = c;
+        category = new TreeItem<>();
         tracksListView  = new ListView<>();
         player = null;
     }
@@ -103,7 +104,7 @@ public class MainScreen extends Group {
         AnchorPane.setBottomAnchor(program_name, 0.0);
 
         track_name.setTextFill(Color.web("#f5c493"));
-        track_name.setFont(new Font("Georgia", 14));
+        track_name.setFont(new Font("Georgia", 12));
         track_name.setAlignment(Pos.TOP_CENTER);
         track_name.setText("Track name");
         track_name.setTextAlignment(TextAlignment.JUSTIFY);
@@ -140,9 +141,7 @@ public class MainScreen extends Group {
                 player.stopM();
                 try {
                     set_current_playlist();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
+                } catch (SQLException | IOException e) {
                     e.printStackTrace();
                 }
             }
@@ -203,10 +202,15 @@ public class MainScreen extends Group {
         bottom_playlist_menu.setLayoutX(440);
         bottom_playlist_menu.setLayoutY(670);
         bottom_playlist_menu.setHgap(10);
-        bottom_playlist_menu.setMinWidth(575);
+        bottom_playlist_menu.setMinWidth(875);
         bottom_playlist_menu.setMinHeight(200);
         bottom_playlist_menu.setBackground(new Background(new BackgroundFill(Color.rgb(36, 30, 57), CornerRadii.EMPTY, Insets.EMPTY)));
         bottom_playlist_menu.setAlignment(Pos.TOP_CENTER);
+
+        Button sort_button = new Button("");
+        sort_button.setMinSize(80,80);
+        sort_button.setStyle("-fx-background-image: url('/ui/icons/sort_icon.png'); " +
+                "-fx-background-size: cover;" + "-fx-background-color:transparent;");
 
         Button add_button = new Button("");
         add_button.setStyle("-fx-background-image: url('/ui/icons/add.png'); " +
@@ -217,7 +221,7 @@ public class MainScreen extends Group {
 
         tracksListView.setStyle("-fx-control-inner-background: \"#241E39\";" + "-fx-font-size: 18px;"
                 + "-fx-font-family: Consolas;" + "-fx-background-color: black;");
-        tracksListView.setMaxWidth(600);
+        tracksListView.getStylesheets().add(getClass().getResource("listview.css").toExternalForm());
 
         add_button.setOnAction(actionEvent -> {
             Timeline timeline = new Timeline();
@@ -258,6 +262,31 @@ public class MainScreen extends Group {
                 try {
                     cfg.write_cfg_state();
                 } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        sort_button.setOnAction(actionEvent -> {
+            configure_animation(sort_button);
+            ObservableList<String> categories = FXCollections.observableArrayList("genre", "album", "group");
+            ChoiceDialog<String> dialog = new ChoiceDialog<>("order by ...", categories);
+            Optional<String> result = dialog.showAndWait();
+            String entered = "none.";
+            if (result.isPresent()) {
+                entered = result.get();
+            }
+            if(!entered.equals("")){
+                DatabaseController db = new DatabaseController();
+                try {
+                    List<MetaData> tracks = db.get_ordered_tracks(cfg.get_current_playlist(), entered);
+                    ObservableList<String> t = FXCollections.observableArrayList();
+                    for(MetaData track : tracks){
+                        t.add(track.get_group_name()+" - "+track.get_track_name());
+                    }
+                    tracksListView.setItems(t);
+                    player = new MP3Player(tracks);
+                } catch (SQLException e) {
                     e.printStackTrace();
                 }
             }
@@ -345,9 +374,10 @@ public class MainScreen extends Group {
             }
         });
 
-        tracksListView.setMinWidth(flow.getMinWidth());
+        tracksListView.setMinWidth(875);
         tracksListView.setMinHeight(670);
         bottom_playlist_menu.getChildren().add(add_button);
+        bottom_playlist_menu.getChildren().add(sort_button);
         tracksListView.getSelectionModel().select(0);
 
         flow.getChildren().add(tracksListView);
@@ -382,7 +412,7 @@ public class MainScreen extends Group {
 
     private void insert_into_db(List<File> fl, String playlist) throws SQLException {
         file_list.addAll(fl);
-        List<MetaData> md = new ArrayList<MetaData>();
+        List<MetaData> md = new ArrayList<>();
         for(File f : file_list){
             md.add(new MetaData(f));
         }
@@ -392,11 +422,7 @@ public class MainScreen extends Group {
 
     public void set_current_playlist() throws SQLException, IOException {
         String playlist = cfg.get_current_playlist();
-        if(playlist.equals("NULL")){
-            return;
-        }
-        else
-        {
+        if (!playlist.equals("NULL")) {
             insert_tracks_to_view(playlist, tracksListView);
             cfg.set_current_playlist(playlist);
             cfg.write_cfg_state();
@@ -412,4 +438,5 @@ public class MainScreen extends Group {
                         new KeyValue(btn  .opacityProperty(), 1)));
         timeline.play();
     }
+
 }
