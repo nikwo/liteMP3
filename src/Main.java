@@ -1,9 +1,12 @@
 import cfg.Config;
 import db.DatabaseController;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import javafx.application.Application;
 import ui.MainScreen;
+
+import java.io.File;
 import java.io.IOException;
 
 
@@ -19,6 +22,7 @@ public class Main extends Application{
             config.write_cfg_state();
         }
         Application.launch(args);
+
     }
 
     @Override

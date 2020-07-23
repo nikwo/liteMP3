@@ -12,7 +12,7 @@ public class Config {
         track_id = timeline_minutes = timeline_seconds = 0;
         current_playlist = "";
     }
-    public void read_cfg(){
+    public void read_cfg() throws IOException {
         File config = new File("./player.cfg");
         if(!config.canRead()){
             System.out.println("Cannot read cfg file, running with default settings");
@@ -20,6 +20,8 @@ public class Config {
             theme = "DEFAULT";
             track_id = timeline_minutes = timeline_seconds = 0;
             current_playlist = "";
+            config.createNewFile();
+            write_cfg_state();
         }
         else{
             BufferedReader reader;
